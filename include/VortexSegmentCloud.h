@@ -72,8 +72,9 @@ class VortexSegmentCloud2D{
 
     void setBoundary( const string & filename  ) {} //read a boundary model file and set the Vertexes of model as boundary sample points 
 
-    void setBoundary( const vector<Vector2d> & b ){
+    void setBoundary( const vector<Vector2d> & b, const vector<Vector2d> & bs ){
         boundary = b;
+        boundarySegments = bs;
         int n = boundary.size();
         int a = boundarySegments.size();
         MatrixXd K = MatrixXd::Zero(2*n,a);
@@ -103,7 +104,7 @@ class VortexSegmentCloud2D{
     void boundaryTreatment( ){
         int n = boundary.size();
         int a = boundarySegments.size();
-        VectorXd U = MatrixXd::Zero(2*n);
+        VectorXd U = VectorXd::Zero(2*n);
         for(int i = 0; i < 2*n; i+=2){
             Vector2d v = velocity(boundary[i/2]);
             U(i) = -v(0);
