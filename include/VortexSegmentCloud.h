@@ -3,7 +3,7 @@
 #include<vector>
 #include<list>
 #include<string>
-#include"glm.hpp"
+#include"../glm/glm.hpp"
 using namespace Eigen;
 using std::vector;
 using std::list;
@@ -53,7 +53,7 @@ class VortexSegmentCloud2D{
     }
 
     vector<glm::vec3> oneStepTemporalEvolution( const double & k){
-        boundaryTreatment();
+        // boundaryTreatment();
         vector<glm::vec3> poses;
         vector<Vector2d> tempP;
         vector<Vector2d> tempV{segments.size()+tracer.size(), Vector2d{0,0}};
@@ -88,23 +88,23 @@ class VortexSegmentCloud2D{
         return poses;
     }
 
-    void setBoundary( const string & filename  ) {} //read a boundary model file and set the Vertexes of model as boundary sample points 
+    // void setBoundary( const string & filename  ) {} //read a boundary model file and set the Vertexes of model as boundary sample points 
 
-    void setBoundary( const vector<Vector2d> & b ){
-        boundary = b;
-        int n = boundary.size();
-        int a = boundarySegments.size();
-        MatrixXd K = MatrixXd::Zero(2*n,a);
-        for( int i = 0; i < 2*n; i += 2 ){
-            for( int j = 0; j < a; j++){
-                Vector2d temp = boundary[i/2] - boundarySegments[j];
-                temp = Vector2d{-temp(1),temp(0)}/(2*M_PI*(temp.squaredNorm()+0.0001*0.0001));
-                K(i,j) = temp(0);
-                K(i+1,j) = temp(1);
-            }
-        }
-        B = (K.transpose()*K+0.00001*MatrixXd::Identity(a,a)).inverse()*K.transpose();
-    } 
+    // void setBoundary( const vector<Vector2d> & b ){
+    //     boundary = b;
+    //     int n = boundary.size();
+    //     int a = boundarySegments.size();
+    //     MatrixXd K = MatrixXd::Zero(2*n,a);
+    //     for( int i = 0; i < 2*n; i += 2 ){
+    //         for( int j = 0; j < a; j++){
+    //             Vector2d temp = boundary[i/2] - boundarySegments[j];
+    //             temp = Vector2d{-temp(1),temp(0)}/(2*M_PI*(temp.squaredNorm()+0.0001*0.0001));
+    //             K(i,j) = temp(0);
+    //             K(i+1,j) = temp(1);
+    //         }
+    //     }
+    //     B = (K.transpose()*K+0.00001*MatrixXd::Identity(a,a)).inverse()*K.transpose();
+    // } 
 
 
     private:
@@ -113,23 +113,23 @@ class VortexSegmentCloud2D{
         Vector2d u{backgroundVelocity};
         for( auto & seg: segments){
             Vector2d temp = pos - seg.pos;
-            u += seg.vortex*Vector2d{-temp(1),temp(0)}/(2*M_PI*(temp.squaredNorm()+0.0001*0.0001));
+            u += seg.vortex*Vector2d{-temp(1),temp(0)}/(2*M_PI*(temp.squaredNorm()+0.1*0.1));
         }
         return u;
     }
 
-    void boundaryTreatment( ){
-        int n = boundary.size();
-        int a = boundarySegments.size();
-        VectorXd U = MatrixXd::Zero(2*n);
-        for(int i = 0; i < 2*n; i+=2){
-            Vector2d v = velocity(boundary[i/2]);
-            U(i) = -v(0);
-            U(i+1) = -v(1);
-        }
-        VectorXd Gamma = B*U;
-        for(int i = 0; i < a; i++ ) segments.push_back(VortexSegment2D(boundarySegments[i],Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
-    }
+    // void boundaryTreatment( ){
+    //     int n = boundary.size();
+    //     int a = boundarySegments.size();
+    //     VectorXd U = MatrixXd::Zero(2*n);
+    //     for(int i = 0; i < 2*n; i+=2){
+    //         Vector2d v = velocity(boundary[i/2]);
+    //         U(i) = -v(0);
+    //         U(i+1) = -v(1);
+    //     }
+    //     VectorXd Gamma = B*U;
+    //     for(int i = 0; i < a; i++ ) segments.push_back(VortexSegment2D(boundarySegments[i],Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
+    // }
 
     list<VortexSegment2D> segments;
     list<VortexSegment2D> tracer;

@@ -104,8 +104,9 @@ class VortexSegmentCloud2D{
 
 
 
-#### added
-编译运行`test.cpp`
+#### added...
+leapfog: 编译运行`test.cpp`
+
 `VortexSegmentCloud2D` 加了 `get_seg()`, `get_tracer`，就是取出点来绘制
 ```c++
     void get_seg(std::vector<glm::vec4> & vec_out) {
