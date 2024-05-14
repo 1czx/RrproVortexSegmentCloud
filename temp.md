@@ -52,7 +52,7 @@ onAdvanceTimeStep() {
         end:    naive swap buffer(velocity, position)(of tracers)
 }
 
-```
+```c++
 struct VortexSegment2D{
     VortexSegment2D(const Vector2d & p, const Vector2d & ve, const Vector3d & c, const double & vo = 0 ):pos{p}, velocity{ve}, color{c}, vortex{vo}{}
     
@@ -64,7 +64,7 @@ struct VortexSegment2D{
 ```
 
 初始化时不指定Vortex就是tracer pratical;
-```
+```c++
 class VortexSegmentCloud2D{
     public:
 
@@ -101,3 +101,31 @@ class VortexSegmentCloud2D{
 };
 ```
 初时设定完之后 每一帧调用一次oneStepTemporalEvolution(k),k为时间间隔, 可以先试试每秒30帧？ 会更新粒子位置 并返回一个包含所有粒子齐次坐标的`vector<glm::vec3>`
+
+
+
+#### added
+编译运行`test.cpp`
+`VortexSegmentCloud2D` 加了 `get_seg()`, `get_tracer`，就是取出点来绘制
+```c++
+    void get_seg(std::vector<glm::vec4> & vec_out) {
+        int i=0;
+        for(auto & seg : segments) {
+            vec_out[i].x = seg.pos(0);
+            vec_out[i].y = seg.pos(1);            
+            i++;
+        }
+    }
+
+    void get_tracer(std::vector<glm::vec4> & vec_out) {
+        int i=0;
+        for(auto & seg : tracer) {
+            vec_out[i].x = seg.pos(0);
+            vec_out[i].y = seg.pos(1);            
+            i++;
+        }
+    }
+```
+
+glad.c 好像跟你的版本不一样，我这边会报错，你改成你的那个
+感觉就两种点的话用不着单独传颜色，所以现在是靠区分 `draw()` 和 `draw_vor()`分别画红和黄。（后面需要的话再改）

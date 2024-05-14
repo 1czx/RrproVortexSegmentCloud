@@ -20,6 +20,7 @@ public:
     
     void getPos(unsigned int VBO_in, int num);
     void draw(glm::mat4 projection, glm::mat4 view);
+    void draw_vor(glm::mat4 projection, glm::mat4 view);
 
 private:
     unsigned int VAO, VBO;
@@ -55,6 +56,30 @@ void PointSprite::draw(glm::mat4 projection, glm::mat4 view) {
         glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniform1f(glGetUniformLocation(shader, "point_size"), 1.0f);
+        glUniform4f(glGetUniformLocation(shader, "inColor"), 1.0, 0.0, 0.0, 1.0);
+
+        glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, n);
+		glBindVertexArray(0);
+
+        glDisable(GL_PROGRAM_POINT_SIZE);
+    } 
+}
+
+
+void PointSprite::draw_vor(glm::mat4 projection, glm::mat4 view) {
+    if (n != 0) {
+        glEnable(GL_PROGRAM_POINT_SIZE);                            // gl_PointSize
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    
+        glm::mat4 model = glm::mat4(1.0f);
+        glUseProgram(shader);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1f(glGetUniformLocation(shader, "point_size"), 1.0f);
+
+        glUniform4f(glGetUniformLocation(shader, "inColor"), 0.937, 1.0, 0.0, 1.0);
         glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, n);
 		glBindVertexArray(0);

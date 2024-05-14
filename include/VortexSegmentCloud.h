@@ -29,6 +29,28 @@ class VortexSegmentCloud2D{
     void addSegment( const VortexSegment2D & newSeg ){ segments.push_back(newSeg); }
 
     void addSegment( const vector<VortexSegment2D> & newSegs ){ for(auto & newSeg: newSegs) segments.push_back(newSeg); }
+    
+    void addTracer( const VortexSegment2D & newSeg ){ tracer.push_back(newSeg); }
+
+    void addTracer( const vector<VortexSegment2D> & newSegs ){ for(auto & newSeg: newSegs) tracer.push_back(newSeg); }
+
+    void get_seg(std::vector<glm::vec4> & vec_out) {
+        int i=0;
+        for(auto & seg : segments) {
+            vec_out[i].x = seg.pos(0);
+            vec_out[i].y = seg.pos(1);            
+            i++;
+        }
+    }
+
+    void get_tracer(std::vector<glm::vec4> & vec_out) {
+        int i=0;
+        for(auto & seg : tracer) {
+            vec_out[i].x = seg.pos(0);
+            vec_out[i].y = seg.pos(1);            
+            i++;
+        }
+    }
 
     vector<glm::vec3> oneStepTemporalEvolution( const double & k){
         boundaryTreatment();
@@ -68,7 +90,21 @@ class VortexSegmentCloud2D{
 
     void setBoundary( const string & filename  ) {} //read a boundary model file and set the Vertexes of model as boundary sample points 
 
-    void setBoundary( const vector<Vector2d> & b ) { boundary = b; } 
+    void setBoundary( const vector<Vector2d> & b ){
+        boundary = b;
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        MatrixXd K = MatrixXd::Zero(2*n,a);
+        for( int i = 0; i < 2*n; i += 2 ){
+            for( int j = 0; j < a; j++){
+                Vector2d temp = boundary[i/2] - boundarySegments[j];
+                temp = Vector2d{-temp(1),temp(0)}/(2*M_PI*(temp.squaredNorm()+0.0001*0.0001));
+                K(i,j) = temp(0);
+                K(i+1,j) = temp(1);
+            }
+        }
+        B = (K.transpose()*K+0.00001*MatrixXd::Identity(a,a)).inverse()*K.transpose();
+    } 
 
 
     private:
@@ -83,13 +119,24 @@ class VortexSegmentCloud2D{
     }
 
     void boundaryTreatment( ){
-
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        VectorXd U = MatrixXd::Zero(2*n);
+        for(int i = 0; i < 2*n; i+=2){
+            Vector2d v = velocity(boundary[i/2]);
+            U(i) = -v(0);
+            U(i+1) = -v(1);
+        }
+        VectorXd Gamma = B*U;
+        for(int i = 0; i < a; i++ ) segments.push_back(VortexSegment2D(boundarySegments[i],Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
     }
 
     list<VortexSegment2D> segments;
     list<VortexSegment2D> tracer;
     vector<Vector2d> boundary;
+    vector<Vector2d> boundarySegments;
     Vector2d backgroundVelocity;
+    MatrixXd B;
 
 };
 
