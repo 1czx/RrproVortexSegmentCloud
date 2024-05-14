@@ -51,3 +51,53 @@ onAdvanceTimeStep() {
 
         end:    naive swap buffer(velocity, position)(of tracers)
 }
+
+```
+struct VortexSegment2D{
+    VortexSegment2D(const Vector2d & p, const Vector2d & ve, const Vector3d & c, const double & vo = 0 ):pos{p}, velocity{ve}, color{c}, vortex{vo}{}
+    
+    Vector2d pos;
+    Vector2d velocity;
+    double vortex;
+    Vector3d color;
+};
+```
+
+初始化时不指定Vortex就是tracer pratical;
+```
+class VortexSegmentCloud2D{
+    public:
+
+    const list<VortexSegment2D> & getSegments (){ return segments; }
+
+    void addSegment( const VortexSegment2D & newSeg ){ segments.push_back(newSeg); }
+
+    void addSegment( const vector<VortexSegment2D> & newSegs ){ for(auto & newSeg: newSegs) segments.push_back(newSeg); }
+    
+    void addTracer( const VortexSegment2D & newSeg ){ tracer.push_back(newSeg); }
+
+    void addTracer( const vector<VortexSegment2D> & newSegs ){ for(auto & newSeg: newSegs) tracer.push_back(newSeg); }
+
+    vector<glm::vec3> oneStepTemporalEvolution( const double & k)
+
+    void setBoundary( const string & filename  ) {} //read a boundary model file and set the Vertexes of model as boundary sample points 
+
+    void setBoundary( const vector<Vector2d> & b ) { boundary = b; } 
+
+
+    private:
+
+    Vector2d velocity( const Vector2d & pos )
+
+    void boundaryTreatment( ){
+
+    }
+
+    list<VortexSegment2D> segments;
+    list<VortexSegment2D> tracer;
+    vector<Vector2d> boundary;
+    Vector2d backgroundVelocity;
+
+};
+```
+初时设定完之后 每一帧调用一次oneStepTemporalEvolution(k),k为时间间隔, 可以先试试每秒30帧？ 会更新粒子位置 并返回一个包含所有粒子齐次坐标的`vector<glm::vec3>`
