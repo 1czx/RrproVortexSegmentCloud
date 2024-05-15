@@ -9,6 +9,22 @@ using std::vector;
 using std::list;
 using std::string;
 
+
+
+#include <random>
+Vector2d rand_off() {
+    double offs = 0.01;
+
+	std::random_device rd;
+	std::mt19937 eng(rd());
+	std::uniform_real_distribution<double> dis(-offs, offs);
+
+    Vector2d ret(dis(eng), dis(eng));
+    return ret;
+}
+
+
+
 const vector<double> CRKc{0,0.5,0.5,1};
 const vector<double> CRKb{1.0/6,1.0/3,1.0/3,1.0/6};
 
@@ -130,7 +146,13 @@ class VortexSegmentCloud2D{
             U(i+1) = -v(1);
         }
         VectorXd Gamma = B*U;
-        for(int i = 0; i < a; i++ ) segments.push_back(VortexSegment2D(boundarySegments[i],Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
+        for(int i = 0; i < a; i++ ) {
+            Vector2d n_pos = boundarySegments[i];
+            // Vector2d n_pos = boundarySegments[i] + rand_off();
+            segments.push_back(VortexSegment2D(n_pos,Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
+
+        } 
+
     }
 
     list<VortexSegment2D> segments;

@@ -74,6 +74,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "dense": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "random": "cpp"
     }
 }

@@ -87,7 +87,7 @@ int main()
         new_tracer.x = new_vec(0);
         new_tracer.y = new_vec(1);
         VortexSegment2D seg(new_vec, dft_set, dft_c, 0);
-        vcloud.addTracer(seg);
+        // vcloud.addTracer(seg);
         // vcloud.addSegment(seg);
     }
     
@@ -95,7 +95,9 @@ int main()
     vector<Vector2d> bd;
     vector<Vector2d> bd_seg;
     vector<glm::vec4> cir;
-    int n = 144;
+    int n = 1280;
+    // int n = 144;
+
     int na = 12;
     double radi = 0.08;
     for(int i=0; i<n; i++) {
@@ -103,13 +105,14 @@ int main()
         cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
         bd.push_back(new_pt);
     }
-    radi += 0.0001;
+    radi += 0.01;
+    // radi += 0.001;
     for(int i=0; i<na; i++) {
         Vector2d new_pt( radi * cos(3.14159 * 2 / na * i), radi * sin(3.14159 * 2 / na * i));
         bd_seg.push_back(new_pt);
     }
     vcloud.setBoundary(bd, bd_seg);
-    vcloud.set_back_vel(0.5, 0.0);
+    vcloud.set_back_vel(2.0, 0.0);
 
 
     vector<glm::vec4> bds;
