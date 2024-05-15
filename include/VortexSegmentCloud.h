@@ -41,7 +41,6 @@ class VortexSegmentCloud2D{
         }
         vec_out.swap(new_vec);
     }
-    
     void get_tracer(std::vector<glm::vec4> & vec_out) {
         std::vector<glm::vec4> new_vec;
         for(auto & seg : tracer) {
@@ -51,7 +50,7 @@ class VortexSegmentCloud2D{
     }
 
     vector<glm::vec3> oneStepTemporalEvolution( const double & k){
-        // boundaryTreatment();
+        boundaryTreatment();
         vector<glm::vec3> poses;
         vector<Vector2d> tempP;
         vector<Vector2d> tempV{segments.size()+tracer.size(), Vector2d{0,0}};
@@ -104,6 +103,10 @@ class VortexSegmentCloud2D{
         }
         B = (K.transpose()*K+0.00001*MatrixXd::Identity(a,a)).inverse()*K.transpose();
     } 
+
+    void set_back_vel(double x, double y) {
+        backgroundVelocity = Vector2d(x, y);
+    }
 
 
     private:
