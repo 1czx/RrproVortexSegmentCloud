@@ -76,43 +76,47 @@ int main()
 
     std::vector<glm::vec4> tracers;
     std::vector<glm::vec4> segms;
-    VortexSegmentCloud2D vcloud;
-    int n_tracer = 1000;                                    // number of tracers = 5000
+    VortexSegmentCloud2D vcloud(1.6, 1);
+    // int n_tracer = 1000;                                    // number of tracers = 5000
     Vector2d dft_set(0.0, 0.0);
     Vector3d dft_c(1.0, 0.0, 0.0);
-    for(int i=0; i<n_tracer; i++) {
-        glm::vec4 new_tracer = glm::vec4(0.0, 0.0, 0.0, 1.0);
-        Vector2d new_vec(random_double(-0.5, -0.3), random_double(-0.1, 0.1));      // random position
-        // Vector2d new_vec(random_double(-0.1, 0.1), random_double(-0.1, 0.1));      // random position
-        new_tracer.x = new_vec(0);
-        new_tracer.y = new_vec(1);
-        VortexSegment2D seg(new_vec, dft_set, dft_c, 0);
-        // vcloud.addTracer(seg);
-        // vcloud.addSegment(seg);
-    }
+    // for(int i=0; i<n_tracer; i++) {
+    //     glm::vec4 new_tracer = glm::vec4(0.0, 0.0, 0.0, 1.0);
+    //     Vector2d new_vec(random_double(-0.5, -0.3), random_double(-0.1, 0.1));      // random position
+    //     // Vector2d new_vec(random_double(-0.1, 0.1), random_double(-0.1, 0.1));      // random position
+    //     new_tracer.x = new_vec(0);
+    //     new_tracer.y = new_vec(1);
+    //     VortexSegment2D seg(new_vec, dft_set, dft_c, 0);
+    //     // vcloud.addTracer(seg);
+    //     // vcloud.addSegment(seg);
+    // }
     
     // boundary???
     vector<Vector2d> bd;
     vector<Vector2d> bd_seg;
     vector<glm::vec4> cir;
-    int n = 1280;
-    // int n = 144;
+    int n = 10;
+    int nb = 1440;
 
-    int na = 12;
+    int na = 30;
     double radi = 0.08;
     for(int i=0; i<n; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i), radi * sin(3.14159 * 2 / n * i));
-        cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
         bd.push_back(new_pt);
     }
+    for(int i=0; i<nb; i++) {
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
+        cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
+    }
+    
     radi += 0.01;
     // radi += 0.001;
     for(int i=0; i<na; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / na * i), radi * sin(3.14159 * 2 / na * i));
+        if(1){ Vector2d new_pt( radi * cos(3.14159 * 2 / na * i+3.14159/4)-1.6, radi * sin(3.14159 * 2 / na * i+3.14159/4));
         bd_seg.push_back(new_pt);
-    }
+    }}
     vcloud.setBoundary(bd, bd_seg);
-    vcloud.set_back_vel(2.0, 0.0);
+    vcloud.set_back_vel(8.0, 0.0);
 
 
     vector<glm::vec4> bds;
@@ -145,7 +149,8 @@ int main()
 
 
         // vcloud.oneStepTemporalEvolution(deltaTime);
-        vcloud.oneStepTemporalEvolution(0.0333);
+        // vcloud.addTracer(tra);
+        vcloud.oneStepTemporalEvolution(0.01,2);
         vcloud.get_tracer(tracers);
         vcloud.get_seg(segms);
         // printf("%d\n", segms.size());

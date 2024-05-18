@@ -151,7 +151,7 @@ class VortexSegmentCloud2D{
                 K(i+1,j) = temp(1);
             }
         }
-        B = (K.transpose()*K+0.00001*MatrixXd::Identity(a,a)).inverse()*K.transpose();
+        B = (K.transpose()*K+3*MatrixXd::Identity(a,a)).inverse()*K.transpose();
     } 
 
     void set_back_vel(double x, double y) {
@@ -183,9 +183,7 @@ class VortexSegmentCloud2D{
         for(int i = 0; i < a; i++ ) {
             Vector2d n_pos = boundarySegments[i];
             // Vector2d n_pos = boundarySegments[i] + rand_off();
-            if(abs(Gamma(i)) > 1e-2) segments.push_back(VortexSegment2D(n_pos,Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
-            else tracer.push_back(VortexSegment2D(n_pos,Vector2d{0,0},Vector3d{1,0,0}));
-
+            if(abs(Gamma(i)) > 1e-3) segments.push_back(VortexSegment2D(n_pos,Vector2d{0,0},Vector3d{0,0,0},Gamma(i)));
         } 
 
     }
