@@ -14,8 +14,8 @@
 
 #include <vector>
 #include <iostream>
-
 #include <opencv2/opencv.hpp>
+
 // #include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -78,50 +78,53 @@ int main()
 
     std::vector<glm::vec4> tracers;
     std::vector<glm::vec4> segms;
-    VortexSegmentCloud2D vcloud;
-    int n_tracer = 1000;                                    // number of tracers = 5000
+    VortexSegmentCloud2D vcloud(1.6, 1);
+    // int n_tracer = 1000;                                    // number of tracers = 5000
     Vector2d dft_set(0.0, 0.0);
     Vector3d dft_c(1.0, 0.0, 0.0);
-    for(int i=0; i<n_tracer; i++) {
-        glm::vec4 new_tracer = glm::vec4(0.0, 0.0, 0.0, 1.0);
-        Vector2d new_vec(random_double(-0.5, -0.3), random_double(-0.1, 0.1));      // random position
-        // Vector2d new_vec(random_double(-0.1, 0.1), random_double(-0.1, 0.1));      // random position
-        new_tracer.x = new_vec(0);
-        new_tracer.y = new_vec(1);
-        VortexSegment2D seg(new_vec, dft_set, dft_c, 0);
-        // vcloud.addTracer(seg);
-        // vcloud.addSegment(seg);
-    }
+    // for(int i=0; i<n_tracer; i++) {
+    //     glm::vec4 new_tracer = glm::vec4(0.0, 0.0, 0.0, 1.0);
+    //     Vector2d new_vec(random_double(-0.5, -0.3), random_double(-0.1, 0.1));      // random position
+    //     // Vector2d new_vec(random_double(-0.1, 0.1), random_double(-0.1, 0.1));      // random position
+    //     new_tracer.x = new_vec(0);
+    //     new_tracer.y = new_vec(1);
+    //     VortexSegment2D seg(new_vec, dft_set, dft_c, 0);
+    //     // vcloud.addTracer(seg);
+    //     // vcloud.addSegment(seg);
+    // }
     
     // boundary???
     vector<Vector2d> bd;
     vector<Vector2d> bd_seg;
     vector<glm::vec4> cir;
-    int n = 1280;
-    // int n = 144;
+    int n = 10;
+    int nb = 1440;
 
-    int na = 12;
+    int na = 30;
     double radi = 0.08;
-    double bd_x_off = -1.8;
     for(int i=0; i<n; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i) + bd_x_off, radi * sin(3.14159 * 2 / n * i));
-        cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
         bd.push_back(new_pt);
     }
+    for(int i=0; i<nb; i++) {
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
+        cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
+    }
+    
     radi += 0.01;
     // radi += 0.001;
     for(int i=0; i<na; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / na * i) + bd_x_off, radi * sin(3.14159 * 2 / na * i));
+        if(1){ Vector2d new_pt( radi * cos(3.14159 * 2 / na * i+3.14159/4)-1.6, radi * sin(3.14159 * 2 / na * i+3.14159/4));
         bd_seg.push_back(new_pt);
-    }
+    }}
     vcloud.setBoundary(bd, bd_seg);
-    vcloud.set_back_vel(2.0, 0.0);
+    vcloud.set_back_vel(8.0, 0.0);
 
 
     vector<glm::vec4> bds;
 
     //////////////////////////////////////////////////////////////////////////////////////////
-    // another test about the...
+    // buffer...
     unsigned int frame_buffer;
     unsigned int frame_texture;
     glGenBuffers(1, &frame_buffer);
@@ -137,45 +140,49 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // about the video
     int numFrames = 100;
     cv::VideoWriter video("output.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(SCR_WIDTH, SCR_HEIGHT));
 
-    //////////////////////////////////////////////////////////////////////////////////////////
     // render loop
+    // -----------
     // while (!glfwWindowShouldClose(window)) {
     double total_time = 0.0;
     for(int i=0; i<numFrames; i++) {
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         total_time += deltaTime;
-        if (deltaTime < 0.0333) {                       // process 30 frame / sec
+        if (deltaTime < 0.0333) {
             continue;
         }
         lastFrame = currentFrame;
 
+
         // process the inputs mouse / keyboard ---> update camera
         processInput(window);
+
         // render
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // background color as black
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         // projection and view (move of the camera)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         line_temp.draw(projection, view);
+
+
         // vcloud.oneStepTemporalEvolution(deltaTime);
-        vcloud.oneStepTemporalEvolution(0.0333, 4);
+        // vcloud.addTracer(tra);
+        vcloud.oneStepTemporalEvolution(0.01,2);
         vcloud.get_tracer(tracers);
         vcloud.get_seg(segms);
         // to draw: pass the vector of points. projection / view are given by camera
         draw_p.draw(tracers, projection, view, 1.0, 0.0, 0.0);
         draw_p.draw(segms, projection, view, 1.0, 1.0, 0.0);
+        // draw_p.draw(bds, projection, view, 0.0, 1.0, 0.0);
+
         draw_p.draw(cir, projection, view, 0.0, 1.0, 0.0);
         printf("[Frame %d / %d]:\tactual fps: 1/%f\t= %f\twith segments: %d\ttime:\t%f\n", i, numFrames, deltaTime, 1.0/deltaTime, segms.size(), total_time);
-
-
 
         // bind the buffer to GL_PIXEL_PACK_BUFFER
         glBindBuffer(GL_PIXEL_PACK_BUFFER, frame_buffer);
@@ -191,13 +198,13 @@ int main()
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);                        // unmap
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);                      // unbind
 
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     // gldelete....
     video.release();                                                // release the video
-
 
     glfwTerminate();
     return 0;
