@@ -3,6 +3,7 @@
 #include<vector>
 #include<list>
 #include<string>
+#include<algorithm>
 #include"../glm/glm.hpp"
 using namespace Eigen;
 using std::vector;
@@ -37,6 +38,10 @@ struct VortexSegment2D{
     Vector3d color;
 };
 
+bool out_of_scr(VortexSegment2D vor) {
+    return (vor.pos(0) > 2.5);
+}
+
 class VortexSegmentCloud2D{
     public:
 
@@ -65,38 +70,44 @@ class VortexSegmentCloud2D{
         vec_out.swap(new_vec);
     }
 
-    vector<glm::vec3> oneStepTemporalEvolution( const double & k){
-        boundaryTreatment();
+    vector<glm::vec3> oneStepTemporalEvolution( const double & k_in, int n){
+    // vector<glm::vec3> oneStepTemporalEvolution( const double & k){
+        double k = k_in/n;
+
         vector<glm::vec3> poses;
-        vector<Vector2d> tempP;
-        vector<Vector2d> tempV{segments.size()+tracer.size(), Vector2d{0,0}};
-        for(auto & seg: segments){ tempP.push_back(seg.pos);}
-        for(auto & seg: tracer) tempP.push_back(seg.pos);
-        for( int i = 0; i < 4; i++ ){
-            for(auto & seg: segments) seg.velocity = velocity(seg.pos);
-            for(auto & seg: tracer) seg.velocity = velocity(seg.pos);
+        for(int times = 0; times < n; times++) {
+            boundaryTreatment();
+            vector<Vector2d> tempP;
+            vector<Vector2d> tempV{segments.size()+tracer.size(), Vector2d{0,0}};
+            segments.remove_if(out_of_scr);
+            for(auto & seg: segments){ tempP.push_back(seg.pos);}
+            for(auto & seg: tracer) tempP.push_back(seg.pos);
+            for( int i = 0; i < 4; i++ ){
+                for(auto & seg: segments) seg.velocity = velocity(seg.pos);
+                for(auto & seg: tracer) seg.velocity = velocity(seg.pos);
+                int iter = 0;
+                for(auto & seg: segments){
+                    tempV[iter] = tempV[iter] + CRKb[i]*seg.velocity;
+                    seg.pos = tempP[iter] + k*CRKc[i]*seg.velocity;
+                    iter++;
+                }
+                for(auto & seg: tracer){
+                    tempV[iter] = tempV[iter] + CRKb[i]*seg.velocity;
+                    seg.pos = tempP[iter] + k*CRKc[i]*seg.velocity;
+                    iter++;
+                }
+            }
             int iter = 0;
             for(auto & seg: segments){
-                tempV[iter] = tempV[iter] + CRKb[i]*seg.velocity;
-                seg.pos = tempP[iter] + k*CRKc[i]*seg.velocity;
+                seg.pos = tempP[iter] + k*tempV[iter];
+                poses.push_back(glm::vec3{seg.pos(0),seg.pos(1),1});
                 iter++;
             }
             for(auto & seg: tracer){
-                tempV[iter] = tempV[iter] + CRKb[i]*seg.velocity;
-                seg.pos = tempP[iter] + k*CRKc[i]*seg.velocity;
+                seg.pos = tempP[iter] + k*tempV[iter];
+                poses.push_back(glm::vec3{seg.pos(0),seg.pos(1),1});
                 iter++;
             }
-        }
-        int iter = 0;
-        for(auto & seg: segments){
-            seg.pos = tempP[iter] + k*tempV[iter];
-            poses.push_back(glm::vec3{seg.pos(0),seg.pos(1),1});
-            iter++;
-        }
-        for(auto & seg: tracer){
-            seg.pos = tempP[iter] + k*tempV[iter];
-            poses.push_back(glm::vec3{seg.pos(0),seg.pos(1),1});
-            iter++;
         }
         return poses;
     }
