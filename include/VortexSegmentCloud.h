@@ -229,6 +229,8 @@ class VortexSegmentCloud3D{
     void addSegment( const vector<VortexSegment3D> & newSegs ){ for(auto & newSeg: newSegs) segments.push_back(newSeg); }
     
     void addTracer( const VortexSegment3D & newSeg ){ tracer.push_back(newSeg); }
+    void addTracer_sec( const VortexSegment3D & newSeg ){ tracer_sec.push_back(newSeg); }
+
 
     void addTracer( const vector<VortexSegment3D> & newSegs ){ for(auto & newSeg: newSegs) tracer.push_back(newSeg); }
 
@@ -239,13 +241,19 @@ class VortexSegmentCloud3D{
         // if(times%20 ==0) addTracer(tra);
             vector<Vector3d> tempPP;
             vector<Vector3d> tempPN;
-            vector<Vector3d> tempVP{segments.size()+tracer.size(), Vector3d{0,0,0}};
-            vector<Vector3d> tempVN{segments.size()+tracer.size(), Vector3d{0,0,0}};
+            // vector<Vector3d> tempVP{segments.size()+tracer.size(), Vector3d{0,0,0}};
+            // vector<Vector3d> tempVN{segments.size()+tracer.size(), Vector3d{0,0,0}};
+            
+            vector<Vector3d> tempVP{segments.size()+tracer.size() + tracer_sec.size(), Vector3d{0,0,0}};
+            vector<Vector3d> tempVN{segments.size()+tracer.size() + tracer_sec.size(), Vector3d{0,0,0}};
             for(auto & seg: segments){ tempPP.push_back(seg.posP);tempPN.push_back(seg.posN);}
             for(auto & seg: tracer) {tempPP.push_back(seg.posP);tempPN.push_back(seg.posN);}
+            for(auto & seg: tracer_sec) {tempPP.push_back(seg.posP);tempPN.push_back(seg.posN);}
+
             for( int i = 0; i < 4; i++ ){
                 for(auto & seg: segments) {seg.velocityP = velocity(seg.posP);seg. velocityN = velocity(seg.posN);}
                 for(auto & seg: tracer) {seg.velocityP = velocity(seg.posP);seg. velocityN = velocity(seg.posN);}
+                for(auto & seg: tracer_sec) {seg.velocityP = velocity(seg.posP);seg. velocityN = velocity(seg.posN);}
                 int iter = 0;
                 for(auto & seg: segments){
                     tempVP[iter] = tempVP[iter] + CRKb[i]*seg.velocityP;
@@ -255,6 +263,13 @@ class VortexSegmentCloud3D{
                     iter++;
                 }
                 for(auto & seg: tracer){
+                    tempVP[iter] = tempVP[iter] + CRKb[i]*seg.velocityP;
+                    seg.posP = tempPP[iter] + k*CRKc[i]*seg.velocityP;
+                    tempVN[iter] = tempVN[iter] + CRKb[i]*seg.velocityN;
+                    seg.posN = tempPP[iter] + k*CRKc[i]*seg.velocityN;
+                    iter++;
+                }
+                for(auto & seg: tracer_sec){
                     tempVP[iter] = tempVP[iter] + CRKb[i]*seg.velocityP;
                     seg.posP = tempPP[iter] + k*CRKc[i]*seg.velocityP;
                     tempVN[iter] = tempVN[iter] + CRKb[i]*seg.velocityN;
@@ -281,6 +296,15 @@ class VortexSegmentCloud3D{
                 else segments.erase(i--);
                 iter++;
             }
+            for(auto i = tracer_sec.begin(); i != tracer_sec.end(); i++ ){
+                VortexSegment3D & seg = *i;
+                seg.posP = tempPP[iter] + k*tempVP[iter];
+                seg.posN = tempPN[iter] + k*tempVN[iter];
+                Vector3d pos = 0.5*(seg.posP+seg.posN);
+                if( pos(0) < domainX && pos(1) < domainY && pos(2) < domainZ ) poses.push_back(glm::vec4{pos(0),pos(1),pos(2),1});
+                else segments.erase(i--);
+                iter++;
+            }
         }
         // std::cout << segments.size() << " " << std::endl; 
         return poses;
@@ -296,6 +320,13 @@ class VortexSegmentCloud3D{
     void get_tracer(std::vector<glm::vec4> & vec_out) {
         std::vector<glm::vec4> new_vec;
         for(auto & seg : tracer) {
+            new_vec.push_back(glm::vec4(seg.posP(0), seg.posP(1), seg.posP(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+    void get_tracer_sec(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : tracer_sec) {
             new_vec.push_back(glm::vec4(seg.posP(0), seg.posP(1), seg.posP(2), 1.0));
         }
         vec_out.swap(new_vec);
@@ -381,6 +412,8 @@ class VortexSegmentCloud3D{
 
     list<VortexSegment3D> segments;
     list<VortexSegment3D> tracer;
+    list<VortexSegment3D> tracer_sec;
+
     vector<Vector3d> boundary;
     vector<Vector3d> boundarySegments;
     Vector3d backgroundVelocity;
