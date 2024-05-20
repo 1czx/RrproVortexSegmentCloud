@@ -239,8 +239,8 @@ class VortexSegmentCloud3D{
         // if(times%20 ==0) addTracer(tra);
             vector<Vector3d> tempPP;
             vector<Vector3d> tempPN;
-            vector<Vector3d> tempVP{segments.size()+tracer.size(), Vector3d{0,0}};
-            vector<Vector3d> tempVN{segments.size()+tracer.size(), Vector3d{0,0}};
+            vector<Vector3d> tempVP{segments.size()+tracer.size(), Vector3d{0,0,0}};
+            vector<Vector3d> tempVN{segments.size()+tracer.size(), Vector3d{0,0,0}};
             for(auto & seg: segments){ tempPP.push_back(seg.posP);tempPN.push_back(seg.posN);}
             for(auto & seg: tracer) {tempPP.push_back(seg.posP);tempPN.push_back(seg.posN);}
             for( int i = 0; i < 4; i++ ){
@@ -282,9 +282,42 @@ class VortexSegmentCloud3D{
                 iter++;
             }
         }
-        std::cout << segments.size() << " "; 
+        // std::cout << segments.size() << " " << std::endl; 
         return poses;
     }
+
+    void get_seg(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : segments) {
+            new_vec.push_back(glm::vec4((seg.posP(0) + seg.posN(0)) / 2, (seg.posP(1) + seg.posN(1)) / 2, (seg.posP(2) + seg.posN(2)) / 2, 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+    void get_tracer(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : tracer) {
+            new_vec.push_back(glm::vec4(seg.posP(0), seg.posP(1), seg.posP(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+
+    void get_seg_p(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : segments) {
+            new_vec.push_back(glm::vec4(seg.posP(0), seg.posP(1), seg.posP(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+
+    void get_seg_n(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : segments) {
+            new_vec.push_back(glm::vec4(seg.posN(0), seg.posN(1), seg.posN(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+
+
 
     private:
     Vector3d velocity( const Vector3d & pos ){

@@ -75,6 +75,9 @@
         "xutility": "cpp",
         "dense": "cpp",
         "core": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "chrono": "cpp",
+        "filesystem": "cpp",
+        "forward_list": "cpp"
     }
 }
