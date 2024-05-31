@@ -305,6 +305,7 @@ class VortexSegmentCloud3D{
                 else segments.erase(i--);
                 iter++;
             }
+            segTopoChange();
         }
         // std::cout << segments.size() << " " << std::endl; 
         return poses;
@@ -398,7 +399,7 @@ class VortexSegmentCloud3D{
             }
         }
 
-        boundaryTreatment();
+        if(boundary.size()!=0) boundaryTreatment();
 
         //delete
         double minVortex = 1e-3;
@@ -408,7 +409,49 @@ class VortexSegmentCloud3D{
         }
     }
 
-    void boundaryTreatment() {}
+    void setBoundary( const vector<Vector3d> & b, const vector<Vector3d> & bs ){
+        double R = 0.001;
+        boundary = b;
+        boundarySegments = bs;
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        MatrixXd K = MatrixXd::Zero(3*n,a/2);
+        for( int i = 0; i < 3*n; i += 3 ){
+            for( int j = 0; j < a; j += 2){
+                Vector3d pos = boundary[i/3];
+                Vector3d posP = boundarySegments[j];
+                Vector3d posN = boundarySegments[j+1];
+                Vector3d temp1 = posP - pos;
+                Vector3d temp2 = posN - pos;
+                Vector3d temp = temp2.cross(temp1);
+                temp = (temp1/(temp1.lpNorm<2>()+R)-temp2/(temp2.lpNorm<2>()+R)).dot(posP - posN)*temp/(temp.squaredNorm() + R*R)/(4*M_PI);
+                K(i,j/2) = temp(0);
+                K(i+1,j/2) = temp(1);
+                K(i+2,j/2) = temp(2); 
+            }
+        }
+        B = (K.transpose()*K+3*MatrixXd::Identity(a,a)).inverse()*K.transpose();
+    }
+
+
+    void boundaryTreatment() {
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        VectorXd U = VectorXd::Zero(3*n);
+        for(int i = 0; i < 3*n; i+=3){
+            Vector3d v = velocity(boundary[i/3]);
+            U(i) = -v(0);
+            U(i+1) = -v(1);
+            U(i+2) = -v(2);
+        }
+        VectorXd Gamma = B*U;
+        for(int i = 0; i < a; i+=2 ) {
+            Vector3d n_posP = boundarySegments[i];
+            Vector3d n_posN = boundarySegments[i+1];
+            // Vector2d n_pos = boundarySegments[i] + rand_off();
+            if(abs(Gamma(i/2)) > 1e-3) segments.push_back(VortexSegment3D(n_posP,n_posN,Vector3d{0,0,0},Vector3d{0,0,0},Vector3d{0,0,0},Gamma(i/2)));
+        }
+    }
 
     list<VortexSegment3D> segments;
     list<VortexSegment3D> tracer;
