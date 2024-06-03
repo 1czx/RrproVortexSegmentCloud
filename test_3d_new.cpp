@@ -31,8 +31,10 @@ const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 800;
 
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 // Camera camera(glm::vec3(3.0f, 0.0f, 0.0f));
+// Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(2.0f, 0.0f, 3.0f));
+// Camera camera(glm::vec3(0.0f, 0.0f, 6.0f));
 
 
 
@@ -93,6 +95,7 @@ int main()
     VortexSegmentCloud3D vcloud(10.0, 10.0, 10.0);          // ???
 
     int n_tracer = 1000;                                    // number of tracers
+    // int n_tracer = 0;                                    // number of tracers
     Vector3d dft_set(0.0, 0.0, 0.0);
     Vector3d dft_c(1.0, 0.0, 0.0);
     Vector3d dft_b(1.0, 0.0, 0.0);
@@ -101,13 +104,27 @@ int main()
     int n_seg = 12;                                         // num of segment (per each ring)
     float radi = 0.15;                                      // radius of the bigger ring
     float radii = 0.15;                                     // radius of the smaller
+
     float radi_per = 0.04;                                  // random...
-    int tracer_per = 50;
+    // int tracer_per = 50;
+    int tracer_per = 0;
+
+    Vector3d x_offset(-1.8, 0.0, 0.0);
 
     float dist = -0.15;                                      // init distance
+
+    
+    float len_radi = 0.1;                                  // distance between x+ x-
+    // float len_radi = 0.2;                               // distance between x+ x-
+    
     for(int i=0; i<n_seg; i++ ) {
         Vector3d pos(0.0, radi * sin(3.14159 * 2 / n_seg * i), radi * cos(3.14159 * 2 / n_seg * i));
         Vector3d pos_i(dist, radii * sin(3.14159 * 2 / n_seg * i), radii * cos(3.14159 * 2 / n_seg * i));
+
+
+        // pos += x_offset;
+        // pos_i += x_offset;
+
 
         for(int j=0; j<tracer_per; j++) {
             Vector3d new_vec(random_double(-radi_per, radi_per), random_double(-radi_per, radi_per), random_double(-radi_per, radi_per));      // random position
@@ -123,14 +140,14 @@ int main()
             vcloud.addTracer_sec(seg);
         }
 
-
-        float len_radi = 0.1;                               // distance between x+ x-
         Vector3d len(0.0, -len_radi * pos(2), len_radi * pos(1));
         Vector3d len_i(0.0, -len_radi * pos_i(2), len_radi * pos_i(1));
 
 
 
-        float vor_temp = 5.0;                               // vor: may influence the speed...
+        float vor_temp = 15.0;                               // vor: may influence the speed...
+        // float vor_temp = 0.2;                               // vor: may influence the speed...
+
 
         vcloud.addSegment(VortexSegment3D(pos + len, pos - len, dft_set, dft_set, dft_c, vor_temp));
         vcloud.addSegment(VortexSegment3D(pos_i + len_i, pos_i - len_i, dft_set, dft_set, dft_c, vor_temp));
@@ -177,6 +194,7 @@ int main()
         }
         lastFrame = currentFrame;
 
+        // printf("[Frame]:\t%f\n", deltaTime);
 
         // process the inputs mouse / keyboard ---> update camera
         processInput(window);
@@ -197,6 +215,10 @@ int main()
         vcloud.get_tracer(tracers);
         vcloud.get_tracer_sec(tracers_sec);
 
+        vcloud.get_segP(segms_p);
+        vcloud.get_segN(segms_n);
+
+
         vcloud.get_seg(segms);
         // vcloud.get_seg_p(segms_p);               // for x+ x-
         // vcloud.get_seg_n(segms_n);
@@ -206,8 +228,13 @@ int main()
         draw_p.draw(tracers_sec, projection, view, 0.0, 0.0, 1.0);
         draw_p.draw(segms, projection, view, 1.0, 1.0, 0.0);
 
-        // draw_p.draw(segms_p, projection, view, 0.0, 1.0, 0.0);               // for x+ x-
-        // draw_p.draw(segms_n, projection, view, 1.0, 0.0, 1.0);
+        draw_p.draw(segms_p, projection, view, 0.0, 1.0, 0.0);               // for x+ x-
+        draw_p.draw(segms_n, projection, view, 1.0, 0.0, 1.0);
+
+
+        glm::vec4 dif_len = segms[2] - segms[0];
+        glm::vec4 half_PN = segms[0] - segms_p[0];
+        printf("%f, %f, %f,\n", glm::length(dif_len), glm::length(half_PN), dif_len.x);
 
 
 

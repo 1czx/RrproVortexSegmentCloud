@@ -305,6 +305,7 @@ class VortexSegmentCloud3D{
                 else segments.erase(i--);
                 iter++;
             }
+            segTopoChange();
         }
         // std::cout << segments.size() << " " << std::endl; 
         return poses;
@@ -317,6 +318,26 @@ class VortexSegmentCloud3D{
         }
         vec_out.swap(new_vec);
     }
+
+    void get_segP(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : segments) {
+            new_vec.push_back(glm::vec4(seg.posP(0), seg.posP(1), seg.posP(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+
+    void get_segN(std::vector<glm::vec4> & vec_out) {
+        std::vector<glm::vec4> new_vec;
+        for(auto & seg : segments) {
+            new_vec.push_back(glm::vec4(seg.posN(0), seg.posN(1), seg.posN(2), 1.0));
+        }
+        vec_out.swap(new_vec);
+    }
+
+
+
+
     void get_tracer(std::vector<glm::vec4> & vec_out) {
         std::vector<glm::vec4> new_vec;
         for(auto & seg : tracer) {
@@ -365,27 +386,61 @@ class VortexSegmentCloud3D{
 
     void segTopoChange(){
         //split
-        double maxLength = 2;
+        // double maxLength = 2;
+        // double maxLength = 0.04754;
+        
+        
+        // double maxLength = 0.0102;
+        // double maxLength = 0.0088;
+
+        double maxLength = 0.020;
+        // double maxLength = 0.030;
+
+
         for( auto i = segments.begin(); i != segments.end(); i++ ){
             auto & seg = *i;
             if( (seg.posP-seg.posN).lpNorm<2>() > maxLength ) {
+                printf("\tsplit\n");
                 auto newSeg = seg;
                 seg.posP = 0.5*(seg.posP+seg.posN);
-                newSeg.posN = seg.posN;
+                // newSeg.posN = seg.posN;
+                newSeg.posN = seg.posP;
                 segments.insert(i,newSeg);
             }
         }
 
         //merge
-        double minDistance = 1;
+        // double minDistance = 1;
+        // double minDistance = 0.13;
+        // double minDistance = 0.01;
+
+
+        // double minDistance = 0.04;
+        // double minDistance = 0.036;
+
+
+        // double minDistance = 0.035;
+        // double minDistance = 0.020;
+        double minDistance = 0.010;         // \2
+
+
+
         double theta = 5*M_PI/6;
         for( auto i = segments.begin(); i != segments.end(); i++ ){
             auto & segi = *i;
-            for( auto j = ++i; j != segments.end(); j++ ){
+
+            auto j = ++i;
+            i--;
+            for( ; j != segments.end(); j++ ){
+
+            // for( auto j = ++i; j != segments.end(); j++ ){
                 auto & segj = *j;
                 auto xi = segi.posP-segi.posN;
                 auto xj = segi.posP-segi.posN;
-                if( 0.5*(segi.posP+segi.posN-segj.posP+segj.posN).lpNorm<2>() < minDistance &&  xi.dot(xj)/(xi.lpNorm<2>()*xj.lpNorm<2>()) > cos(theta) ){
+                                
+                if( 0.5*(segi.posP+segi.posN-(segj.posP+segj.posN)).lpNorm<2>() < minDistance &&  xi.dot(xj)/(xi.lpNorm<2>()*xj.lpNorm<2>()) > cos(theta) ){                    
+                // if( 0.5*(segi.posP+segi.posN-segj.posP+segj.posN).lpNorm<2>() < minDistance &&  xi.dot(xj)/(xi.lpNorm<2>()*xj.lpNorm<2>()) > cos(theta) ){                    
+                    printf("\tmerge\n");
                     auto pos = 0.25*(segi.posP+segi.posN+segj.posP+segj.posN);
                     double length = 0.5*(xi.norm()+xj.norm());
                     Vector3d gamma = (segi.vortex*xi+segj.vortex*xj)/length;
@@ -393,22 +448,69 @@ class VortexSegmentCloud3D{
                     gamma = gamma/segi.vortex;
                     segi.posP = pos+0.5*length*gamma;
                     segi.posN = pos-0.5*length*gamma;
-                    segments.erase(j--);
+                    segments.erase(j--);                
                 }
+
+                /////////////////////
+                // here
+                /////////////////////
             }
         }
 
-        boundaryTreatment();
-
+        // if(boundary.size()!=0) boundaryTreatment();
         //delete
         double minVortex = 1e-3;
         for( auto i = segments.begin(); i != segments.end(); i++ ){
             auto & seg = *i;
             if( seg.vortex < minVortex ) segments.erase(i--);
         }
+
+        // printf("\n");
     }
 
-    void boundaryTreatment() {}
+    void setBoundary( const vector<Vector3d> & b, const vector<Vector3d> & bs ){
+        double R = 0.001;
+        boundary = b;
+        boundarySegments = bs;
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        MatrixXd K = MatrixXd::Zero(3*n,a/2);
+        for( int i = 0; i < 3*n; i += 3 ){
+            for( int j = 0; j < a; j += 2){
+                Vector3d pos = boundary[i/3];
+                Vector3d posP = boundarySegments[j];
+                Vector3d posN = boundarySegments[j+1];
+                Vector3d temp1 = posP - pos;
+                Vector3d temp2 = posN - pos;
+                Vector3d temp = temp2.cross(temp1);
+                temp = (temp1/(temp1.lpNorm<2>()+R)-temp2/(temp2.lpNorm<2>()+R)).dot(posP - posN)*temp/(temp.squaredNorm() + R*R)/(4*M_PI);
+                K(i,j/2) = temp(0);
+                K(i+1,j/2) = temp(1);
+                K(i+2,j/2) = temp(2); 
+            }
+        }
+        B = (K.transpose()*K+3*MatrixXd::Identity(a,a)).inverse()*K.transpose();
+    }
+
+
+    void boundaryTreatment() {
+        int n = boundary.size();
+        int a = boundarySegments.size();
+        VectorXd U = VectorXd::Zero(3*n);
+        for(int i = 0; i < 3*n; i+=3){
+            Vector3d v = velocity(boundary[i/3]);
+            U(i) = -v(0);
+            U(i+1) = -v(1);
+            U(i+2) = -v(2);
+        }
+        VectorXd Gamma = B*U;
+        for(int i = 0; i < a; i+=2 ) {
+            Vector3d n_posP = boundarySegments[i];
+            Vector3d n_posN = boundarySegments[i+1];
+            // Vector2d n_pos = boundarySegments[i] + rand_off();
+            if(abs(Gamma(i/2)) > 1e-3) segments.push_back(VortexSegment3D(n_posP,n_posN,Vector3d{0,0,0},Vector3d{0,0,0},Vector3d{0,0,0},Gamma(i/2)));
+        }
+    }
 
     list<VortexSegment3D> segments;
     list<VortexSegment3D> tracer;

@@ -31,7 +31,12 @@ const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 800;
 
 
+// const unsigned int SCR_WIDTH = 1920;
+// const unsigned int SCR_HEIGHT = 1080;
+
+
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -75,10 +80,13 @@ int main()
 
     DrawParticle draw_p;
 
+    float x_pos = 1.8;
+    // float x_pos = 3.2;
+    VortexSegmentCloud2D vcloud(x_pos, 3.0);
+
 
     std::vector<glm::vec4> tracers;
     std::vector<glm::vec4> segms;
-    VortexSegmentCloud2D vcloud(1.6, 1);
     // int n_tracer = 1000;                                    // number of tracers = 5000
     Vector2d dft_set(0.0, 0.0);
     Vector3d dft_c(1.0, 0.0, 0.0);
@@ -102,23 +110,34 @@ int main()
 
     int na = 30;
     double radi = 0.08;
+    // double radi = 0.16;
+    // 0.090510675 - 0.0905106775
+    // double radi = 0.0905106755;
+
+    // 0.09, 2.0, to get slower...
     for(int i=0; i<n; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-x_pos, radi * sin(3.14159 * 2 / n * i));
         bd.push_back(new_pt);
     }
     for(int i=0; i<nb; i++) {
-        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-1.6, radi * sin(3.14159 * 2 / n * i));
+        Vector2d new_pt( radi * cos(3.14159 * 2 / n * i)-x_pos, radi * sin(3.14159 * 2 / n * i));
         cir.push_back(glm::vec4(new_pt(0), new_pt(1), 0, 1));
     }
     
     radi += 0.01;
     // radi += 0.001;
     for(int i=0; i<na; i++) {
-        if(1){ Vector2d new_pt( radi * cos(3.14159 * 2 / na * i+3.14159/4)-1.6, radi * sin(3.14159 * 2 / na * i+3.14159/4));
+        if(1){ Vector2d new_pt( radi * cos(3.14159 * 2 / na * i+3.14159/4)-x_pos, radi * sin(3.14159 * 2 / na * i+3.14159/4));
         bd_seg.push_back(new_pt);
     }}
     vcloud.setBoundary(bd, bd_seg);
-    vcloud.set_back_vel(8.0, 0.0);
+    // vcloud.set_back_vel(8.0, 0.0);                                          // background velocity
+    // vcloud.set_back_vel(4.0, 0.0);                                          // background velocity
+    vcloud.set_back_vel(1.0, 0.0);                                          // background velocity
+    // vcloud.set_back_vel(0.2, 0.0);                                          // terrible velocity...
+    // 2.0
+
+
 
 
     vector<glm::vec4> bds;
@@ -141,13 +160,15 @@ int main()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // about the video
-    int numFrames = 100;
+    int numFrames = 350;
     cv::VideoWriter video("output.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(SCR_WIDTH, SCR_HEIGHT));
 
     // render loop
     // -----------
-    // while (!glfwWindowShouldClose(window)) {
+    int i=0;
     double total_time = 0.0;
+    // while (!glfwWindowShouldClose(window)) {
+        i++;
     for(int i=0; i<numFrames; i++) {
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
