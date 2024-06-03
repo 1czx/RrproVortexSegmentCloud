@@ -15,3 +15,9 @@ g++ main.cpp glad.c  -o main.exe -lglfw3 -lgdi32 -lopengl32
 
 
 `test_3d_new.cpp`调了红蓝两色，图简单就直接把 cloud 里的 tracer 分了两个，后面看看改（
+
+
+### 6.3
+`expo_test`：   Leapfrogging
+
+`off_screen`：  卡门涡旋
